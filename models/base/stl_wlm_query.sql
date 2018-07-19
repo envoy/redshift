@@ -4,7 +4,7 @@ select
 , query as query_id
 , xid
 , task
-, service_class
+, service_class as service_class_id
 , slot_count
 , service_class_start_time
 , queue_start_time
