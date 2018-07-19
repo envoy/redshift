@@ -7,15 +7,6 @@ source-paths: ["models"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
 
-archive:
-  - source_schema: dbt_dwall_redshift
-    target_schema: dbt_archive
-    tables:
-      - source_table: table_stats
-        target_table: table_stats_archived
-        updated_at: "getdate()"
-        unique_key: table_id
-
 models:
   redshift:
     schema: redshift
