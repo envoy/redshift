@@ -1,12 +1,18 @@
 name: 'redshift'
 version: '0.0.1'
 
+profile: 'default'
+
 source-paths: ["models"]
 macro-paths: ["macros"]
 test-paths: ["tests"]
 
 models:
   redshift:
+    schema: redshift
+    vars:
+      iam_role: 'arn:aws:iam::842393318262:role/RedshiftCopyUnload'
+
     base:
       materialized: ephemeral
 
@@ -15,3 +21,17 @@ models:
 
     views:
       materialized: view
+      queries:
+        vars:
+          bucket_path: 's3://redshift-dbt-logs/query_logs/query_logs_'
+        post-hook: "unload ('select ql.* from dbt_spectrum_redshift.query_logs ql union select q.* from {{ this }} q where q.query_id not in (select ql.query_id from dbt_spectrum_redshift.query_logs ql)') to '{{ var('bucket_path') }}' iam_role '{{ var('iam_role') }}' manifest delimiter as ',' null as '' escape allowoverwrite"
+
+      query_text:
+        vars:
+          bucket_path: 's3://redshift-dbt-logs/query_text_logs/query_text_logs_'
+        post-hook: "unload ('select qtl.* from dbt_spectrum_redshift.query_text_logs qtl union select qt.* from {{ this }} qt where qt.query_id not in (select qtl.query_id from dbt_spectrum_redshift.query_text_logs qtl)') to '{{ var('bucket_path') }}' iam_role '{{ var('iam_role') }}' manifest delimiter as ',' null as '' escape allowoverwrite"
+
+      table_stats:
+        vars:
+          bucket_path: 's3://redshift-dbt-logs/table_stats_logs/table_stats_logs_'
+        post-hook: "unload ('select tsl.* from dbt_spectrum_redshift.table_stats_logs tsl union select ts.*, getdate() as snapshot_system_timestamp from {{ this }} ts') to '{{ var('bucket_path') }}' iam_role '{{ var('iam_role') }}' manifest delimiter as ',' null as '' escape allowoverwrite"
